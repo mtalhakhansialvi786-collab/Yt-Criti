@@ -4,11 +4,13 @@ const YTDlpWrap = require('yt-dlp-wrap').default;
 const path = require('path');
 const fs = require('fs');
 
+// Docker/Koyeb environment ke liye global path
 const ytDlpPath = 'yt-dlp'; 
 const ytDlpWrap = new YTDlpWrap(ytDlpPath);
 
 const app = express();
 
+// Aapka original CORS setup
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST'],
@@ -17,16 +19,19 @@ app.use(cors({
 
 app.use(express.json());
 
-// Cookies file ka path check karein
+// Cookies file check (Bot detection se bachne ke liye)
 const cookiesPath = path.join(__dirname, 'cookies.txt');
-const hasCookies = fs.existsSync(cookiesPath);
+const hasCookies = fs.existsSync(cookiesPath) && fs.statSync(cookiesPath).size > 0;
 
+// Engine Status
 app.get('/health', (req, res) => res.json({ 
     status: 'online', 
-    engine: 'Critixo-Ultra-V9.5',
-    cookies_active: hasCookies
+    engine: 'Critixo-Ultra-V9.5-Audio-Ready', 
+    cookies_active: hasCookies,
+    uptime: process.uptime()
 }));
 
+// 1. Meta Fetcher (Aapka original logic)
 app.get('/video-info', async (req, res) => {
     const videoURL = req.query.url;
     if(!videoURL) return res.status(400).send("URL required");
@@ -36,10 +41,12 @@ app.get('/video-info', async (req, res) => {
             videoURL, 
             '--no-playlist', 
             '--no-check-certificates',
-            '--no-warnings'
+            '--no-warnings',
+            // User-Agent taake YouTube ko lage ye browser hai
+            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         ];
 
-        // Agar cookies.txt mojud hai to use karein
+        // Agar cookies.txt mein data hai to use karein
         if(hasCookies) {
             args.push('--cookies', cookiesPath);
         }
@@ -61,12 +68,18 @@ app.get('/video-info', async (req, res) => {
         });
     } catch (err) {
         console.error("Extraction Error:", err);
-        res.status(500).json({ error: "Extraction Failed", details: err.message });
+        res.status(500).json({ 
+            error: "Extraction Failed", 
+            details: err.message,
+            solution: "Please update cookies.txt if bot error persists"
+        });
     }
 });
 
+// 2. Stream Engine (Aapka original download logic)
 app.get('/download', async (req, res) => {
-    const { url, type } = req.query;
+    const { url, type, title } = req.query;
+    
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Connection', 'keep-alive');
     
@@ -74,36 +87,50 @@ app.get('/download', async (req, res) => {
         url, '-o', '-', '--no-playlist', 
         '--buffer-size', '1M', 
         '--no-part', 
-        '--no-check-certificates'
+        '--concurrent-fragments', '16', 
+        '--no-check-certificates',
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ]; 
 
     if(hasCookies) {
         args.push('--cookies', cookiesPath);
     }
 
-    if (type === '4k') args.push('-f', 'bestvideo+bestaudio/best');
-    else if (type === 'hd') args.push('-f', 'bestvideo[height<=1080]+bestaudio/best');
+    // Aapke saare formats bilkul same hain:
+    if (type === '4k') args.push('-f', 'bestvideo[height<=2160]+bestaudio/best');
+    else if (type === 'hd') args.push('-f', 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]');
+    else if (type === '720p') args.push('-f', 'best[height<=720][ext=mp4]');
+    else if (type === '360p') args.push('-f', 'best[height<=360][ext=mp4]');
     else if (type === 'audio') {
-        args.push('-f', 'bestaudio', '--extract-audio', '--audio-format', 'mp3');
-    } else {
-        args.push('-f', 'best');
+        args.push('-f', 'bestaudio', '--extract-audio', '--audio-format', 'mp3', '--audio-quality', '320K');
+    } else if (type === '128k') {
+        args.push('-f', 'bestaudio', '--extract-audio', '--audio-format', 'mp3', '--audio-quality', '128K');
     }
 
     try {
         const ytStream = ytDlpWrap.execStream(args);
+        
         ytStream.on('error', (err) => {
+            console.error("Stream Error:", err);
             if(!res.headersSent) res.status(500).end();
         });
+
         ytStream.pipe(res);
-        req.on('close', () => { if (ytStream) ytStream.destroy(); });
+
+        req.on('close', () => {
+            if (ytStream) ytStream.destroy();
+        });
+
     } catch (error) {
+        console.error("Download Error:", error);
         if(!res.headersSent) res.status(500).end();
     }
 });
 
+// Koyeb Port Management
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 CRITIXO ACTIVE ON PORT ${PORT}`);
+    console.log(`🚀 CRITIXO ULTRA V9.5 ACTIVE ON PORT ${PORT}`);
 });
 
 module.exports = app;
