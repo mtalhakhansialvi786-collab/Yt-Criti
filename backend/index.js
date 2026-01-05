@@ -43,15 +43,18 @@ const fixAndGetCookies = () => {
 
 const hasCookies = fixAndGetCookies();
 
+// 🚀 FIX: Favicon 404 Error (Browser ko icon provide karna)
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Engine Status
 app.get('/health', (req, res) => res.json({ 
     status: 'online', 
-    engine: 'Critixo-Ultra-V9.5-Super-Strong-Final', 
+    engine: 'Critixo-Ultra-V10-Ultimate-Bypass', 
     cookies_valid: hasCookies,
     uptime: process.uptime()
 }));
 
-// 1. Meta Fetcher (Bypass logic enhanced)
+// 1. Meta Fetcher (Ultimate Bypass logic)
 app.get('/video-info', async (req, res) => {
     const videoURL = req.query.url;
     if(!videoURL) return res.status(400).send("URL required");
@@ -62,10 +65,11 @@ app.get('/video-info', async (req, res) => {
             '--no-playlist', 
             '--no-check-certificates',
             '--no-warnings',
-            // 🚀 SUPER STRONG BYPASS: Mixed Client Spoofing
-            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            '--extractor-args', 'youtube:player_client=android,web,ios;player_skip_subscribe_check=True;include_live_dash',
             '--geo-bypass',
+            // 🚀 SUPER STRONG BYPASS: Real Browser User-Agent
+            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            // YouTube's New Bot Detection Bypass
+            '--extractor-args', 'youtube:player_client=android,ios,web;player_skip_subscribe_check=True',
             '--dump-json'
         ];
 
@@ -89,16 +93,18 @@ app.get('/video-info', async (req, res) => {
             clean_name: metadata.title.replace(/[^\w\s]/gi, '').substring(0, 50)
         });
     } catch (err) {
-        console.error("Extraction Error:", err);
+        console.error("Extraction Error:", err.message);
+        // Detail error bhejna taake debug ho sake
         res.status(500).json({ 
-            error: "YouTube Security Block", 
-            details: err.message,
-            solution: "Change your YouTube cookies or try a different region in Koyeb."
+            error: "Extraction Failed", 
+            details: err.message.substring(0, 200),
+            cookies_status: hasCookies ? "Found" : "Missing",
+            tip: "Check Koyeb logs for 'Sign in to confirm you're not a bot'"
         });
     }
 });
 
-// 2. Stream Engine (Strong download logic)
+// 2. Stream Engine (Aapka original download logic)
 app.get('/download', async (req, res) => {
     const { url, type } = req.query;
     
@@ -109,7 +115,7 @@ app.get('/download', async (req, res) => {
         url, '-o', '-', 
         '--no-playlist', 
         '--no-check-certificates',
-        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         '--extractor-args', 'youtube:player_client=android,web',
         '--buffer-size', '1M',
         '--no-part'
@@ -119,7 +125,7 @@ app.get('/download', async (req, res) => {
         args.push('--cookies', cleanCookiesPath);
     }
 
-    // Aapke original formats (4k, hd, 720p, 360p, audio, 128k)
+    // Aapke saare formats unchanged
     if (type === '4k') args.push('-f', 'bestvideo[height<=2160]+bestaudio/best');
     else if (type === 'hd') args.push('-f', 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]');
     else if (type === '720p') args.push('-f', 'best[height<=720][ext=mp4]');
@@ -155,7 +161,7 @@ app.get('/download', async (req, res) => {
 // Koyeb Port Management
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 SUPER STRONG ENGINE ACTIVE ON PORT ${PORT}`);
+    console.log(`🚀 CRITIXO ULTRA V10 ACTIVE ON PORT ${PORT}`);
 });
 
 module.exports = app;
