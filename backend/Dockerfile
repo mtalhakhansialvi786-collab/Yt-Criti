@@ -5,20 +5,20 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy package files
+# Sab se pehle package files copy karein
 COPY package*.json ./
 
-# Force install (ignore lock files)
-RUN npm install
+# Install dependencies (lock file ke baghair)
+RUN npm install --no-package-lock
 
-# Copy all files
+# Baqi sara code copy karein
 COPY . .
 
-# Run postinstall manually to get yt-dlp
-RUN npm run postinstall
+# yt-dlp ko manually install karein taake script ka error na aaye
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod a+rx /usr/local/bin/yt-dlp
 
-# Expose port
+# Port expose karein
 EXPOSE 8000
 
-# Start app
-CMD ["npm", "start"]
+# App start karein
+CMD ["node", "index.js"]
