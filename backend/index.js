@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const YTDlpWrap = require('yt-dlp-wrap').default;
-const ytDlpWrap = new YTDlpWrap();
 const path = require('path');
+
+// Koyeb par binary project folder mein hoti hai, is liye path dena zaroori hai
+const ytDlpPath = path.join(__dirname, 'yt-dlp');
+const ytDlpWrap = new YTDlpWrap(ytDlpPath);
 
 const app = express();
 app.use(cors());
@@ -43,6 +46,7 @@ app.get('/video-info', async (req, res) => {
             clean_name: metadata.title.replace(/[^\w\s]/gi, '').substring(0, 50)
         });
     } catch (err) {
+        console.error("Extraction Error:", err);
         res.status(500).send("Extraction Failed");
     }
 });
@@ -72,21 +76,26 @@ app.get('/download', async (req, res) => {
         args.push('-f', 'bestaudio', '--extract-audio', '--audio-format', 'mp3', '--audio-quality', '128K');
     }
 
-    const ytStream = ytDlpWrap.execStream(args);
-    ytStream.pipe(res);
+    try {
+        const ytStream = ytDlpWrap.execStream(args);
+        ytStream.pipe(res);
 
-    req.on('close', () => {
-        if (ytStream) ytStream.destroy();
-    });
+        req.on('close', () => {
+            if (ytStream) ytStream.destroy();
+        });
 
-    ytStream.on('error', () => {
+        ytStream.on('error', (err) => {
+            console.error("Stream Error:", err);
+            if(!res.headersSent) res.status(500).end();
+        });
+    } catch (error) {
         if(!res.headersSent) res.status(500).end();
-    });
+    }
 });
 
-// Local testing ke liye PORT zaroori hai
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 CRITIXO ULTRA V9.5 ACTIVE WITH SOUND`));
+// Koyeb hamesha environment variable se PORT uthata hai
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 CRITIXO ULTRA V9.5 ACTIVE ON PORT ${PORT}`));
 
-// VERCEL ke liye exports lazmi hai
+// Compatibility ke liye export
 module.exports = app;
