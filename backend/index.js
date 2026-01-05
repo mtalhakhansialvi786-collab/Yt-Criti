@@ -23,7 +23,7 @@ app.use(express.json());
 const rawCookiesPath = path.join(__dirname, 'cookies.txt');
 const cleanCookiesPath = path.join(__dirname, 'clean_cookies.txt');
 
-// Cookies fix karne ka naya function (Jo Netscape format error ko khatam karega)
+// Cookies fix karne ka function (Jo Netscape format error ko khatam karega)
 const fixAndGetCookies = () => {
     try {
         if (fs.existsSync(rawCookiesPath)) {
@@ -68,7 +68,10 @@ app.get('/video-info', async (req, res) => {
             '--no-playlist', 
             '--no-check-certificates',
             '--no-warnings',
-            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            // YouTube Bot Detection Bypass Arguments
+            '--extractor-args', 'youtube:player_client=android,web;include_live_dash',
+            '--geo-bypass'
         ];
 
         // Cleaned cookies use karna
@@ -115,14 +118,15 @@ app.get('/download', async (req, res) => {
         '--no-part', 
         '--concurrent-fragments', '16', 
         '--no-check-certificates',
-        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        '--extractor-args', 'youtube:player_client=android,web'
     ]; 
 
     if(hasCookies) {
         args.push('--cookies', cleanCookiesPath);
     }
 
-    // Aapke saare formats bilkul same hain:
+    // Aapke saare formats bilkul same hain (4k, hd, 720p, 360p, audio, 128k):
     if (type === '4k') args.push('-f', 'bestvideo[height<=2160]+bestaudio/best');
     else if (type === 'hd') args.push('-f', 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]');
     else if (type === '720p') args.push('-f', 'best[height<=720][ext=mp4]');
