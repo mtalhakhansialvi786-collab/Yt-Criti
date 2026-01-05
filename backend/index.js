@@ -23,21 +23,15 @@ app.use(express.json());
 const rawCookiesPath = path.join(__dirname, 'cookies.txt');
 const cleanCookiesPath = path.join(__dirname, 'clean_cookies.txt');
 
-// Cookies fix karne ka function (Jo Netscape format error ko khatam karega)
+// Cookies fix karne ka function (Netscape format ensure karne ke liye)
 const fixAndGetCookies = () => {
     try {
         if (fs.existsSync(rawCookiesPath)) {
             let content = fs.readFileSync(rawCookiesPath, 'utf8');
-            
-            // Hidden characters aur extra spaces khatam karna
             content = content.replace(/^\uFEFF/, '').trim();
-            
-            // Agar header missing ho to add karna
             if (!content.startsWith('# Netscape')) {
                 content = '# Netscape HTTP Cookie File\n' + content;
             }
-
-            // Clean file save karna taake yt-dlp khush rahe
             fs.writeFileSync(cleanCookiesPath, content, 'utf8');
             return true;
         }
@@ -52,12 +46,12 @@ const hasCookies = fixAndGetCookies();
 // Engine Status
 app.get('/health', (req, res) => res.json({ 
     status: 'online', 
-    engine: 'Critixo-Ultra-V9.5-Audio-Ready', 
+    engine: 'Critixo-Ultra-V9.5-Super-Strong-Final', 
     cookies_valid: hasCookies,
     uptime: process.uptime()
 }));
 
-// 1. Meta Fetcher (Aapka original logic)
+// 1. Meta Fetcher (Bypass logic enhanced)
 app.get('/video-info', async (req, res) => {
     const videoURL = req.query.url;
     if(!videoURL) return res.status(400).send("URL required");
@@ -68,15 +62,13 @@ app.get('/video-info', async (req, res) => {
             '--no-playlist', 
             '--no-check-certificates',
             '--no-warnings',
-            // Spoofing Android User-Agent to bypass data-center blocks
-            '--user-agent', 'com.google.android.youtube/19.29.37 (Linux; U; Android 11; en_US; Pixel 4 XL; Build/RP1A.200720.009)',
-            // YouTube Bot Detection Bypass Arguments - Mazeed Sakht Bypass
-            '--extractor-args', 'youtube:player_client=android,web;include_live_dash',
+            // 🚀 SUPER STRONG BYPASS: Mixed Client Spoofing
+            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            '--extractor-args', 'youtube:player_client=android,web,ios;player_skip_subscribe_check=True;include_live_dash',
             '--geo-bypass',
             '--dump-json'
         ];
 
-        // Cleaned cookies use karna
         if(hasCookies) {
             args.push('--cookies', cleanCookiesPath);
         }
@@ -99,36 +91,35 @@ app.get('/video-info', async (req, res) => {
     } catch (err) {
         console.error("Extraction Error:", err);
         res.status(500).json({ 
-            error: "Extraction Failed", 
+            error: "YouTube Security Block", 
             details: err.message,
-            cookies_status: hasCookies ? "Processed & Cleaned" : "Invalid/Missing",
-            solution: "Ensure cookies.txt is in Netscape format and pushed to GitHub"
+            solution: "Change your YouTube cookies or try a different region in Koyeb."
         });
     }
 });
 
-// 2. Stream Engine (Aapka original download logic)
+// 2. Stream Engine (Strong download logic)
 app.get('/download', async (req, res) => {
-    const { url, type, title } = req.query;
+    const { url, type } = req.query;
     
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Connection', 'keep-alive');
     
     let args = [
-        url, '-o', '-', '--no-playlist', 
-        '--buffer-size', '1M', 
-        '--no-part', 
-        '--concurrent-fragments', '16', 
+        url, '-o', '-', 
+        '--no-playlist', 
         '--no-check-certificates',
-        '--user-agent', 'com.google.android.youtube/19.29.37 (Linux; U; Android 11; en_US; Pixel 4 XL; Build/RP1A.200720.009)',
-        '--extractor-args', 'youtube:player_client=android,web'
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        '--extractor-args', 'youtube:player_client=android,web',
+        '--buffer-size', '1M',
+        '--no-part'
     ]; 
 
     if(hasCookies) {
         args.push('--cookies', cleanCookiesPath);
     }
 
-    // Aapke saare formats (4k, hd, 720p, 360p, audio, 128k) - Bilkul same rakhe hain
+    // Aapke original formats (4k, hd, 720p, 360p, audio, 128k)
     if (type === '4k') args.push('-f', 'bestvideo[height<=2160]+bestaudio/best');
     else if (type === 'hd') args.push('-f', 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]');
     else if (type === '720p') args.push('-f', 'best[height<=720][ext=mp4]');
@@ -137,6 +128,8 @@ app.get('/download', async (req, res) => {
         args.push('-f', 'bestaudio', '--extract-audio', '--audio-format', 'mp3', '--audio-quality', '320K');
     } else if (type === '128k') {
         args.push('-f', 'bestaudio', '--extract-audio', '--audio-format', 'mp3', '--audio-quality', '128K');
+    } else {
+        args.push('-f', 'best');
     }
 
     try {
@@ -162,7 +155,7 @@ app.get('/download', async (req, res) => {
 // Koyeb Port Management
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 CRITIXO ULTRA V9.5 ACTIVE ON PORT ${PORT}`);
+    console.log(`🚀 SUPER STRONG ENGINE ACTIVE ON PORT ${PORT}`);
 });
 
 module.exports = app;
