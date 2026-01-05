@@ -3,12 +3,19 @@ const cors = require('cors');
 const YTDlpWrap = require('yt-dlp-wrap').default;
 const path = require('path');
 
-// Koyeb par binary project folder mein hoti hai, is liye path dena zaroori hai
-const ytDlpPath = path.join(__dirname, 'yt-dlp');
+// Docker mein yt-dlp globally installed hai, is liye sirf 'yt-dlp' likhna kafi hai
+const ytDlpPath = 'yt-dlp'; 
 const ytDlpWrap = new YTDlpWrap(ytDlpPath);
 
 const app = express();
-app.use(cors());
+
+// CORS configuration - Vercel aur local dono ke liye
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
 // Engine Status
@@ -47,7 +54,7 @@ app.get('/video-info', async (req, res) => {
         });
     } catch (err) {
         console.error("Extraction Error:", err);
-        res.status(500).send("Extraction Failed");
+        res.status(500).json({ error: "Extraction Failed", details: err.message });
     }
 });
 
@@ -55,6 +62,7 @@ app.get('/video-info', async (req, res) => {
 app.get('/download', async (req, res) => {
     const { url, type, title } = req.query;
     
+    // Header settings for streaming
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Connection', 'keep-alive');
     
@@ -78,24 +86,29 @@ app.get('/download', async (req, res) => {
 
     try {
         const ytStream = ytDlpWrap.execStream(args);
+        
+        // Error handling during stream
+        ytStream.on('error', (err) => {
+            console.error("Stream Error:", err);
+            if(!res.headersSent) res.status(500).end();
+        });
+
         ytStream.pipe(res);
 
         req.on('close', () => {
             if (ytStream) ytStream.destroy();
         });
 
-        ytStream.on('error', (err) => {
-            console.error("Stream Error:", err);
-            if(!res.headersSent) res.status(500).end();
-        });
     } catch (error) {
+        console.error("Download Error:", error);
         if(!res.headersSent) res.status(500).end();
     }
 });
 
-// Koyeb hamesha environment variable se PORT uthata hai
+// Koyeb Port Management
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 CRITIXO ULTRA V9.5 ACTIVE ON PORT ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 CRITIXO ULTRA V9.5 ACTIVE ON PORT ${PORT}`);
+});
 
-// Compatibility ke liye export
 module.exports = app;
