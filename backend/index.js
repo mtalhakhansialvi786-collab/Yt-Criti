@@ -19,15 +19,32 @@ app.use(cors({
 
 app.use(express.json());
 
-// Cookies file check (Bot detection se bachne ke liye)
+// Cookies file ka path
 const cookiesPath = path.join(__dirname, 'cookies.txt');
-const hasCookies = fs.existsSync(cookiesPath) && fs.statSync(cookiesPath).size > 0;
+
+// Cookies check karne ka behtar tariqa (Programmatic check)
+const getValidCookies = () => {
+    try {
+        if (fs.existsSync(cookiesPath)) {
+            const content = fs.readFileSync(cookiesPath, 'utf8');
+            // Check karein ke Netscape header mojud hai ya nahi
+            if (content.includes('Netscape')) {
+                return true;
+            }
+        }
+    } catch (e) {
+        console.error("Cookie check error:", e);
+    }
+    return false;
+};
+
+const hasCookies = getValidCookies();
 
 // Engine Status
 app.get('/health', (req, res) => res.json({ 
     status: 'online', 
     engine: 'Critixo-Ultra-V9.5-Audio-Ready', 
-    cookies_active: hasCookies,
+    cookies_valid: hasCookies,
     uptime: process.uptime()
 }));
 
@@ -46,7 +63,7 @@ app.get('/video-info', async (req, res) => {
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         ];
 
-        // Agar cookies.txt mein data hai to use karein
+        // Agar cookies.txt valid hai to use karein
         if(hasCookies) {
             args.push('--cookies', cookiesPath);
         }
@@ -71,7 +88,8 @@ app.get('/video-info', async (req, res) => {
         res.status(500).json({ 
             error: "Extraction Failed", 
             details: err.message,
-            solution: "Please update cookies.txt if bot error persists"
+            cookies_status: hasCookies ? "Valid Format" : "Invalid/Missing",
+            solution: "Check cookies.txt encoding (should be UTF-8)"
         });
     }
 });
