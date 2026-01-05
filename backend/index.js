@@ -70,9 +70,11 @@ app.get('/video-info', async (req, res) => {
             '--no-warnings',
             // Spoofing Android User-Agent to bypass data-center blocks
             '--user-agent', 'com.google.android.youtube/19.29.37 (Linux; U; Android 11; en_US; Pixel 4 XL; Build/RP1A.200720.009)',
-            // YouTube Bot Detection Bypass Arguments
-            '--extractor-args', 'youtube:player_client=android;player_skip_subscribe_check=True',
-            '--geo-bypass'
+            // YouTube Bot Detection Bypass Arguments - Mazeed Sakht Bypass
+            '--extractor-args', 'youtube:player_client=android,web;include_live_dash',
+            '--geo-bypass',
+            '--list-formats', // Kabhi kabhi format list karne se connection stable ho jata hai
+            '--dump-json'
         ];
 
         // Cleaned cookies use karna
@@ -120,14 +122,14 @@ app.get('/download', async (req, res) => {
         '--concurrent-fragments', '16', 
         '--no-check-certificates',
         '--user-agent', 'com.google.android.youtube/19.29.37 (Linux; U; Android 11; en_US; Pixel 4 XL; Build/RP1A.200720.009)',
-        '--extractor-args', 'youtube:player_client=android'
+        '--extractor-args', 'youtube:player_client=android,web'
     ]; 
 
     if(hasCookies) {
         args.push('--cookies', cleanCookiesPath);
     }
 
-    // Aapke saare formats (4k, hd, 720p, 360p, audio, 128k)
+    // Aapke saare formats (4k, hd, 720p, 360p, audio, 128k) - Bilkul same rakhe hain
     if (type === '4k') args.push('-f', 'bestvideo[height<=2160]+bestaudio/best');
     else if (type === 'hd') args.push('-f', 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]');
     else if (type === '720p') args.push('-f', 'best[height<=720][ext=mp4]');
