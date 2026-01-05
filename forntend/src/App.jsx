@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
+// Aapka Live Koyeb Backend URL
+const API_BASE_URL = "https://striped-philomena-critixo-labs-c21e960e.koyeb.app";
+
 function App() {
   const [url, setUrl] = useState('')
   const [videoInfo, setVideoInfo] = useState(null)
@@ -37,10 +40,11 @@ function App() {
     setLoading(true);
     setVideoInfo(null);
     try {
-      const res = await axios.get(`http://localhost:5000/video-info?url=${encodeURIComponent(targetUrl)}`);
+      // Localhost ki jagah Live URL use kiya gaya hai
+      const res = await axios.get(`${API_BASE_URL}/video-info?url=${encodeURIComponent(targetUrl)}`);
       setVideoInfo(res.data);
     } catch (err) {
-      console.error("Invalid Link");
+      console.error("Invalid Link or Backend Offline");
     }
     setLoading(false);
   }
@@ -61,7 +65,8 @@ function App() {
 
     try {
       const response = await axios({
-        url: `http://localhost:5000/download?url=${encodeURIComponent(url)}&type=${type}&title=${encodeURIComponent(fileName)}`,
+        // Localhost ki jagah Live URL use kiya gaya hai
+        url: `${API_BASE_URL}/download?url=${encodeURIComponent(url)}&type=${type}&title=${encodeURIComponent(fileName)}`,
         method: 'GET',
         responseType: 'blob',
         onDownloadProgress: (p) => {
@@ -84,6 +89,7 @@ function App() {
       playSuccessSound();
       setDownloads(prev => prev.map(dl => dl.id === downloadId ? { ...dl, status: 'Completed', progress: 100 } : dl));
     } catch (err) {
+      console.error("Download Error:", err);
       setDownloads(prev => prev.map(dl => dl.id === downloadId ? { ...dl, status: 'Failed' } : dl));
     }
   };
@@ -101,7 +107,6 @@ function App() {
 
   return (
     <div style={ui.body}>
-      {/* --- NAVBAR --- */}
       <nav style={ui.navbar}>
         <div style={ui.navContent}>
           <div style={ui.logo}>CRITIXO <span style={{color:'#fff', fontSize:'0.7rem', border:'1px solid #f00', padding:'2px 5px', borderRadius:'4px', marginLeft:'5px'}}>ULTRA V9.5</span></div>
@@ -115,7 +120,6 @@ function App() {
       </nav>
 
       <div style={ui.main}>
-        {/* HERO SECTION */}
         <div style={{textAlign:'center', marginBottom:'40px'}}>
            <h1 style={{fontSize:'2.5rem', fontWeight:'900', background:'linear-gradient(to right, #fff, #666)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>NEXT-GEN DOWNLOADER</h1>
            <p style={{color:'#555', marginTop:'10px'}}>Youtube videos download karein ultra fast speed ke sath.</p>
@@ -169,11 +173,8 @@ function App() {
         </div>
       </div>
 
-      {/* --- DETAILED LUXURY FOOTER --- */}
       <footer style={ui.footer}>
         <div style={ui.footerContent}>
-          
-          {/* SECTION 1: ABOUT */}
           <div style={ui.footerSection}>
             <div style={ui.logo}>CRITIXO <span>V9.5</span></div>
             <p style={ui.footerPara}>Critixo Ultra duniya ka fastest YouTube meta-engine hai jo high-quality video aur audio extraction ko support karta hai. Hamara mission user ko baghair kisi ad ke premium downloading experience dena hai.</p>
@@ -184,7 +185,6 @@ function App() {
             </div>
           </div>
 
-          {/* SECTION 2: HOW TO DOWNLOAD */}
           <div id="how" style={ui.footerSection}>
             <h4 style={ui.footerHeading}>HOW TO DOWNLOAD</h4>
             <ul style={ui.footerList}>
@@ -195,7 +195,6 @@ function App() {
             </ul>
           </div>
 
-          {/* SECTION 3: BENEFITS */}
           <div id="benefits" style={ui.footerSection}>
             <h4 style={ui.footerHeading}>ULTRA BENEFITS</h4>
             <ul style={ui.footerList}>
@@ -207,7 +206,6 @@ function App() {
             </ul>
           </div>
 
-          {/* SECTION 4: CONTACT & LEGAL */}
           <div id="contact" style={ui.footerSection}>
             <h4 style={ui.footerHeading}>GET IN TOUCH</h4>
             <p style={ui.footerPara}>Koi masla ho toh rabta karein:</p>
@@ -238,26 +236,18 @@ function App() {
 
 const ui = {
   body: { backgroundColor: '#000', color: '#fff', minHeight: '100vh', fontFamily: "'Inter', sans-serif" },
-  
-  // NAVBAR
   navbar: { borderBottom: '1px solid #111', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 1000 },
   navContent: { maxWidth: '1200px', margin: '0 auto', padding: '15px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   logo: { fontWeight: '900', color: '#f00', fontSize: '1.4rem', letterSpacing: '-1px' },
   navLinks: { display: 'flex', gap: '25px', alignItems: 'center' },
   navLink: { color: '#888', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500', transition: '0.3s' },
   statusBadge: { fontSize: '0.65rem', background: '#0f02', color: '#0f0', padding: '4px 10px', borderRadius: '20px', border: '1px solid #0f04' },
-
   main: { maxWidth: '1100px', margin: '0 auto', padding: '60px 20px' },
-  
-  // SEARCHBOX
   searchWrapper: { display: 'flex', background: '#0a0a0a', padding: '10px', borderRadius: '16px', border: '1px solid #1a1a1a', marginBottom: '60px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' },
   pasteBtn: { background: '#1a1a1a', color: '#fff', border: 'none', padding: '0 20px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' },
   input: { flex: 1, background: 'transparent', border: 'none', color: '#fff', padding: '15px', outline: 'none', fontSize: '1rem' },
   searchBtn: { background: '#f00', color: '#fff', border: 'none', padding: '0 30px', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 0 15px rgba(255,0,0,0.3)' },
-
   contentGrid: { display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '40px' },
-  
-  // CARD & TASKS
   card: { background: '#050505', padding: '25px', borderRadius: '24px', border: '1px solid #111' },
   cardTitle: { fontSize: '0.75rem', color: '#555', letterSpacing: '3px', marginBottom: '25px', textAlign: 'center' },
   taskItem: { background: '#080808', padding: '18px', borderRadius: '16px', marginBottom: '15px', border: '1px solid #111' },
@@ -265,8 +255,6 @@ const ui = {
   progressBase: { height: '6px', background: '#000', borderRadius: '10px', overflow: 'hidden' },
   progressFill: { height: '100%', background: 'linear-gradient(90deg, #f00, #ff4444)', boxShadow: '0 0 10px #f00' },
   taskBottom: { display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', marginTop: '12px', color: '#444' },
-
-  // PREVIEW
   previewCard: { background: '#080808', borderRadius: '24px', overflow: 'hidden', border: '1px solid #1a1a1a', position: 'sticky', top: '100px' },
   thumb: { width: '100%', height: '280px', objectFit: 'cover', borderBottom: '1px solid #1a1a1a' },
   infoContent: { padding: '25px' },
@@ -276,8 +264,6 @@ const ui = {
   btnW: { background: '#fff', color: '#000', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' },
   btnG: { background: '#1a1a1a', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer' },
   btnR: { background: '#f00', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' },
-
-  // FOOTER (EXTENDED)
   footer: { background: '#050505', borderTop: '1px solid #111', padding: '80px 0 30px 0', marginTop: '100px' },
   footerContent: { maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '50px', padding: '0 25px' },
   footerSection: { display: 'flex', flexDirection: 'column', gap: '20px' },
@@ -290,8 +276,6 @@ const ui = {
   footerBottom: { textAlign: 'center', marginTop: '80px', paddingTop: '30px', borderTop: '1px solid #111', color: '#333', fontSize: '0.75rem' },
   socialIcons: { display: 'flex', gap: '15px' },
   icon: { width: '35px', height: '35px', background: '#111', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#fff', textDecoration: 'none' },
-
-  // SKELETON
   skeletonCard: { background: '#050505', borderRadius: '24px', overflow: 'hidden', border: '1px solid #111' },
   skeletonThumb: { width: '100%', height: '280px', background: 'linear-gradient(90deg, #0a0a0a 25%, #151515 50%, #0a0a0a 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' },
   skeletonInfo: { padding: '25px' },
