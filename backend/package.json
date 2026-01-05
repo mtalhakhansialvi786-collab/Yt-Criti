@@ -1,11 +1,12 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Critixo Ultra V9.5 Backend Engine",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "node index.js",
+    "postinstall": "curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp && chmod a+rx yt-dlp"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +17,8 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "node-cron": "^4.2.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "yt-dlp-wrap": "^2.3.12"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
