@@ -19,26 +19,35 @@ app.use(cors({
 
 app.use(express.json());
 
-// Cookies file ka path
-const cookiesPath = path.join(__dirname, 'cookies.txt');
+// Cookies paths
+const rawCookiesPath = path.join(__dirname, 'cookies.txt');
+const cleanCookiesPath = path.join(__dirname, 'clean_cookies.txt');
 
-// Cookies check karne ka behtar tariqa (Programmatic check)
-const getValidCookies = () => {
+// Cookies fix karne ka naya function (Jo Netscape format error ko khatam karega)
+const fixAndGetCookies = () => {
     try {
-        if (fs.existsSync(cookiesPath)) {
-            const content = fs.readFileSync(cookiesPath, 'utf8');
-            // Check karein ke Netscape header mojud hai ya nahi
-            if (content.includes('Netscape')) {
-                return true;
+        if (fs.existsSync(rawCookiesPath)) {
+            let content = fs.readFileSync(rawCookiesPath, 'utf8');
+            
+            // Hidden characters aur extra spaces khatam karna
+            content = content.replace(/^\uFEFF/, '').trim();
+            
+            // Agar header missing ho to add karna
+            if (!content.startsWith('# Netscape')) {
+                content = '# Netscape HTTP Cookie File\n' + content;
             }
+
+            // Clean file save karna taake yt-dlp khush rahe
+            fs.writeFileSync(cleanCookiesPath, content, 'utf8');
+            return true;
         }
     } catch (e) {
-        console.error("Cookie check error:", e);
+        console.error("Cookie processing error:", e);
     }
     return false;
 };
 
-const hasCookies = getValidCookies();
+const hasCookies = fixAndGetCookies();
 
 // Engine Status
 app.get('/health', (req, res) => res.json({ 
@@ -59,13 +68,12 @@ app.get('/video-info', async (req, res) => {
             '--no-playlist', 
             '--no-check-certificates',
             '--no-warnings',
-            // User-Agent taake YouTube ko lage ye browser hai
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         ];
 
-        // Agar cookies.txt valid hai to use karein
+        // Cleaned cookies use karna
         if(hasCookies) {
-            args.push('--cookies', cookiesPath);
+            args.push('--cookies', cleanCookiesPath);
         }
 
         let metadata = await ytDlpWrap.getVideoInfo(args);
@@ -88,8 +96,8 @@ app.get('/video-info', async (req, res) => {
         res.status(500).json({ 
             error: "Extraction Failed", 
             details: err.message,
-            cookies_status: hasCookies ? "Valid Format" : "Invalid/Missing",
-            solution: "Check cookies.txt encoding (should be UTF-8)"
+            cookies_status: hasCookies ? "Processed & Cleaned" : "Invalid/Missing",
+            solution: "Ensure cookies.txt is in Netscape format and pushed to GitHub"
         });
     }
 });
@@ -111,7 +119,7 @@ app.get('/download', async (req, res) => {
     ]; 
 
     if(hasCookies) {
-        args.push('--cookies', cookiesPath);
+        args.push('--cookies', cleanCookiesPath);
     }
 
     // Aapke saare formats bilkul same hain:
