@@ -3,7 +3,7 @@ const cors = require('cors');
 const YTDlpWrap = require('yt-dlp-wrap').default;
 const path = require('path');
 
-// Docker mein yt-dlp globally installed hai, is liye sirf 'yt-dlp' likhna kafi hai
+// Docker/Koyeb ke liye global path set kiya hai
 const ytDlpPath = 'yt-dlp'; 
 const ytDlpWrap = new YTDlpWrap(ytDlpPath);
 
@@ -54,7 +54,12 @@ app.get('/video-info', async (req, res) => {
         });
     } catch (err) {
         console.error("Extraction Error:", err);
-        res.status(500).json({ error: "Extraction Failed", details: err.message });
+        // Debugging ke liye detail response
+        res.status(500).json({ 
+            error: "Extraction Failed", 
+            message: err.message,
+            hint: "Check if Python3 and yt-dlp are installed in Dockerfile"
+        });
     }
 });
 
